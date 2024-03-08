@@ -1,90 +1,165 @@
-# 🪐 Objaverse-XL
+# 🪐 Rendering Script
+Rendering script to render 3D file into .png and .np file (camera matrix), create data to train zero123 model.
+## 🖥️ Setup
 
-This repository contains scripts to download and process Objaverse-XL.
+1. Clone the repository and enter the rendering directory:
 
-<img src="https://mattdeitke.com/static/1cdcdb2ef7033e177ca9ae2975a9b451/9c1ca/objaverse-xl.webp">
+```bash
+git clone https://github.com/nnthao109/render3D && \
+  cd objaverse-xl/scripts/rendering
+```
 
-Objaverse-XL is an open dataset of over 10 million 3D objects!
+2. Download Blender:
 
-With it, we train Zero123-XL, a foundation model for 3D, observing incredible 3D generalization abilities: 🧵👇
+```bash
+wget https://download.blender.org/release/Blender3.2/blender-3.2.2-linux-x64.tar.xz && \
+  tar -xf blender-3.2.2-linux-x64.tar.xz && \
+  rm blender-3.2.2-linux-x64.tar.xz
+```
 
-## Scale Comparison
+3. If you're on a headless Linux server, install Xorg and start it:
 
-Objaverse 1.0 was released back in December. It was a step in the right direction, but still relatively small with 800K objects.
+```bash
+sudo apt-get install xserver-xorg -y && \
+  sudo python3 start_x_server.py start
+```
 
-Objaverse-XL is over an order of magnitude larger and much more diverse!
+4. Install the Python dependencies. Note that Python >3.8 is required:
 
-<img src="https://github.com/allenai/objaverse-rendering/assets/28768645/43833dd3-ec97-4a3d-8782-00a6aea584b4">
+```bash
+cd ../.. && \
+  pip install -r requirements.txt && \
+  pip install -e . && \
+  cd scripts/rendering
+```
 
-## Unlocking Generalization
+## 📸 Usage
+### 🐥 Usage 
+```bash
+python3 render3D.py -- --render_dir {path to put render output} --local_path {path to 3D object} --num_renders {numbers of renders}
+```
+#### Example run 
 
-Compared to the original Zero123 model, Zero123-XL improves remarkably in 0-shot generalization abilities, even being able to perform novel view synthesis on sketches, cartoons, and people!
+```bash
+bash render3D.sh
+```
 
-A ton more examples in the [📝 paper](https://arxiv.org/abs/2307.05663) :)
+### 🐥 Minimal Example with Objaverse data
 
-<img src="https://github.com/allenai/objaverse-rendering/assets/28768645/8470e4df-e39d-444b-9871-58fbee4b87fd">
+After setup, we can start to render objects using the `main.py` script:
 
-## Image → 3D
+```bash
+python3 main.py
+```
 
-With the base Zero123-XL foundation model, we can perform image → 3D using [DreamFusion](https://dreamfusion3d.github.io/), having the model guide a NeRF to generate novel views!
+After running this, you should see 10 zip files located in `~/.objaverse/github/renders`. Each zip file corresponds to the rendering of a unique object, in this case from [our example 3D objects repo](https://github.com/mattdeitke/objaverse-xl-test-files):
 
-https://github.com/allenai/objaverse-rendering/assets/28768645/571852cd-dc02-46ce-b2bb-88f64a67d0ac
+```bash
+> ls ~/.objaverse/github/renders
+0fde27a0-99f0-5029-8e20-be9b8ecabb59.zip  54f7478b-4983-5541-8cf7-1ab2e39a842e.zip  93499b75-3ee0-5069-8f4b-1bab60d2e6d6.zip
+21dd4d7b-b203-5d00-b325-0c041f43524e.zip  5babbc61-d4e1-5b5c-9b47-44994bbf958e.zip  ab30e24f-1046-5257-8806-2e346f4efebe.zip
+415ca2d5-9d87-568c-a5ff-73048a084229.zip  5f6d2547-3661-54d5-9895-bebc342c753d.zip
+44414a2a-e8f0-5a5f-bb58-6be50d8fd034.zip  8a170083-0529-547f-90ec-ebc32eafe594.zip
+```
 
-## Text → 3D
+If we unzip one of the zip files:
 
-Text-to-3D comes for free with text → image models, such as with SDXL here, providing the initial image!
+```bash
+> cd ~/.objaverse/github/renders
+> unzip 0fde27a0-99f0-5029-8e20-be9b8ecabb59.zip
+```
 
-https://github.com/allenai/objaverse-rendering/assets/28768645/96255b42-8158-4c7a-8308-7b0f1257ada8
+we will see that there is a new `0fde27a0-99f0-5029-8e20-be9b8ecabb59` directory. If we look in that directory, we'll find the following files:
 
-## Scaling Trends
+```bash
+> ls 0fde27a0-99f0-5029-8e20-be9b8ecabb59
+000.npy  001.npy  002.npy  003.npy  004.npy  005.npy  006.npy  007.npy  008.npy  009.npy  010.npy  011.npy  metadata.json
+000.png  001.png  002.png  003.png  004.png  005.png  006.png  007.png  008.png  009.png  010.png  011.png
+```
 
-Beyond that, we show strong scaling trends for both Zero123-XL and [PixelNeRF](https://alexyu.net/pixelnerf/)!
+Here, we see that there are 12 renders `[000-011].png`. Each render will look something like one of the 4 images shown below, but likely with the camera at a different location as its location is randomized during rendering:
 
-<img src="https://github.com/allenai/objaverse-rendering/assets/28768645/0c8bb433-27df-43a1-8cb8-1772007c0899">
+![266900773-69d79e26-4df1-4bd2-854c-7d3c888adae7](https://github.com/allenai/objaverse-xl/assets/28768645/440fe28e-4c5a-4460-a4df-6730028c0b22)
 
-## Tutorial
+Additionally, there are 12 npy files `[000-011].npy`, which include information about the camera's pose for a given render. We can read the npy files using:
 
-Check out the [Google Colab tutorial](https://colab.research.google.com/drive/15XpZMjrHXuky0IgBbXcsUtb_0g-XWYmN?usp=sharing) to download Objaverse-XL .
+```python
+import numpy as np
+array = np.load("000.npy")
+```
 
-Polycam data is available by Polycam to academic researchers for non-commercial use upon request and approval from Polycam. For access please fill out [this form](https://forms.gle/HUjYVtS9GKVS5QBXA).
+where array is now a 3x4 [camera matrix](https://en.wikipedia.org/wiki/Camera_matrix) that looks something like:
 
-## Blender Rendering
+```python
+array([[6.07966840e-01,  7.93962419e-01,  3.18103019e-08,  2.10451518e-07],
+       [4.75670159e-01, -3.64238620e-01,  8.00667346e-01, -5.96046448e-08],
+       [6.35699809e-01, -4.86779213e-01, -5.99109232e-01, -1.66008198e+00]])
+```
 
-Blender rendering scripts are available in the [scripts/rendering directory](https://github.com/allenai/objaverse-xl/tree/main/scripts/rendering)!
+Finally, we also have a `metadata.json` file, which contains metadata about the object and scene:
 
-![266879371-69064f78-a752-40d6-bd36-ea7c15ffa1ec](https://github.com/allenai/objaverse-xl/assets/28768645/2f042d94-090b-4fd0-b37d-23b5971987ed)
-
-## License
-
-The use of the dataset as a whole is licensed under the ODC-By v1.0 license. Individual objects in Objaverse-XL are licensed under different licenses.
-
-## Citation
-
-To cite Objaverse-XL, please cite our [📝 arXiv](https://arxiv.org/abs/2307.05663) paper with the following BibTeX entry:
-
-```bibtex
-@article{objaverseXL,
-  title={Objaverse-XL: A Universe of 10M+ 3D Objects},
-  author={Matt Deitke and Ruoshi Liu and Matthew Wallingford and Huong Ngo and
-          Oscar Michel and Aditya Kusupati and Alan Fan and Christian Laforte and
-          Vikram Voleti and Samir Yitzhak Gadre and Eli VanderBilt and
-          Aniruddha Kembhavi and Carl Vondrick and Georgia Gkioxari and
-          Kiana Ehsani and Ludwig Schmidt and Ali Farhadi},
-  journal={arXiv preprint arXiv:2307.05663},
-  year={2023}
+```json
+{
+  "animation_count": 0,
+  "armature_count": 0,
+  "edge_count": 2492,
+  "file_identifier": "https://github.com/mattdeitke/objaverse-xl-test-files/blob/ead0bed6a76012452273bbe18d12e4d68a881956/example.abc",
+  "file_size": 108916,
+  "lamp_count": 1,
+  "linked_files": [],
+  "material_count": 0,
+  "mesh_count": 3,
+  "missing_textures": {
+    "count": 0,
+    "file_path_to_color": {},
+    "files": []
+  },
+  "object_count": 8,
+  "poly_count": 984,
+  "random_color": null,
+  "save_uid": "0fde27a0-99f0-5029-8e20-be9b8ecabb59",
+  "scene_size": {
+    "bbox_max": [
+      4.999998569488525,
+      6.0,
+      1.0
+    ],
+    "bbox_min": [
+      -4.999995231628418,
+      -6.0,
+      -1.0
+    ]
+  },
+  "sha256": "879bc9d2d85e4f3866f0cfef41f5236f9fff5f973380461af9f69cdbed53a0da",
+  "shape_key_count": 0,
+  "vert_count": 2032
 }
 ```
 
-Objaverse 1.0 is available on 🤗Hugging Face at [@allenai/objaverse](https://huggingface.co/datasets/allenai/objaverse). To cite it, use:
+### 🎛 Configuration
 
-```bibtex
-@article{objaverse,
-  title={Objaverse: A Universe of Annotated 3D Objects},
-  author={Matt Deitke and Dustin Schwenk and Jordi Salvador and Luca Weihs and
-          Oscar Michel and Eli VanderBilt and Ludwig Schmidt and
-          Kiana Ehsani and Aniruddha Kembhavi and Ali Farhadi},
-  journal={arXiv preprint arXiv:2212.08051},
-  year={2022}
-}
+Inside of `main.py` there is a `render_objects` function that provides various parameters allowing for customization during the rendering process:
+
+- `render_dir: str = "~/.objaverse"`: The directory where the objects will be rendered. Default is `"~/.objaverse"`.
+- `download_dir: Optional[str] = None`: The directory where the objects will be downloaded. Thanks to fsspec, we support writing files to many file systems. To use it, simply use the prefix of your filesystem before the path. For example hdfs://, s3://, http://, gcs://, or ssh://. Some of these file systems require installing an additional package (for example s3fs for s3, gcsfs for gcs, fsspec/sshfs for ssh). Start [here](https://github.com/rom1504/img2dataset#file-system-support) for more details on fsspec. If None, the objects will be deleted after they are rendered.
+- `num_renders: int = 12`: The number of renders to save for each object. Defaults to `12`.
+- `processes: Optional[int] = None`: The number of processes to utilize for downloading the objects. If left as `None` (default), it will default to `multiprocessing.cpu_count() * 3`.
+- `save_repo_format: Optional[Literal["zip", "tar", "tar.gz", "files"]] = None`: If specified, the GitHub repository will be deleted post rendering each object from it. Available options are `"zip"`, `"tar"`, and `"tar.gz"`. If `None` (default), no action is taken.
+- `only_northern_hemisphere: bool = False`: If `True`, only the northern hemisphere of the object is rendered. This is useful for objects acquired via photogrammetry, as the southern hemisphere may have holes. Default is `False`.
+- `render_timeout: int = 300`: Maximum number of seconds to await completion of the rendering job. Default is `300` seconds.
+- `gpu_devices: Optional[Union[int, List[int]]] = None`: Specifies GPU device(s) for rendering. If an `int`, the GPU device is randomly chosen from `0` to `gpu_devices - 1`. If a `List[int]`, a GPU device is randomly chosen from the list. If `0`, the CPU is used. If `None` (default), all available GPUs are utilized.
+
+To tweak the objects that you want to render, go into `main.py` and update the `get_example_objects` function.
+
+#### Example
+
+To render objects using a custom configuration:
+
+```bash
+python3 main.py --render_dir s3://bucket/render/directory --num_renders 15 --only_northern_hemisphere True
 ```
 
+
+### 🧑‍🔬️ Experimental Features
+
+USDZ support is experimental. Since Blender does not natively support usdz, we use [this Blender addon](https://github.com/robmcrosby/BlenderUSDZ), but it doesn't work with all types of USDZs. If you have a better solution, PRs are very much welcome 😄!
