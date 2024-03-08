@@ -754,14 +754,23 @@ def render_object(
     os.makedirs(output_dir, exist_ok=True)
 
     # load the object
+    # print(123)
     if object_file.endswith(".blend"):
+        # print(object_file)
+        # bpy.ops.wm.open_mainfile(filepath=object_file)
+        # bpy.ops.object.select_all(action='SELECT')
+        # output_file = object_file - ".blend" + ".obj"
+        # bpy.ops.export_scene.obj(filepath=output_file, use_selection=True)
+        # object_file = output_file
+        # print(object_file)
         bpy.ops.object.mode_set(mode="OBJECT")
         reset_cameras()
         delete_invisible_objects()
     else:
         reset_scene()
         load_object(object_file)
-
+    # reset_scene()
+    # load_object(object_file)
     # Set up cameras
     cam = scene.objects["Camera"]
     cam.data.lens = 35
@@ -891,6 +900,8 @@ if __name__ == "__main__":
     ].preferences.compute_device_type = "CUDA"  # or "OPENCL"
 
     # Render the images
+    # print(args.object_path)
+    
     render_object(
         object_file=args.object_path,
         num_renders=args.num_renders,
